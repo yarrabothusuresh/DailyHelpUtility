@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home Loan EMI Calculator</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#6a7686;--bd:#e1e5ea;--ac:#1f6feb;--g:#1a9b5b;--r:#d6453d;--p:#1f6feb;--i:#f0a020}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161c;--card:#1b222b;--tx:#e8edf3;--mu:#93a0b0;--bd:#2d3744;--ac:#5aa0ff;--g:#4cc38a;--r:#ff7b72;--p:#5aa0ff}}
+:root[data-theme="dark"]{--bg:#12161c;--card:#1b222b;--tx:#e8edf3;--mu:#93a0b0;--bd:#2d3744;--ac:#5aa0ff;--g:#4cc38a;--r:#ff7b72;--p:#5aa0ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:15px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu)}
+.sub{color:var(--mu);margin:0 0 16px}
+.grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input[type=range]{padding:0;accent-color:var(--ac)}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--bd)}
+.row:last-child{border:0}.row b{font-variant-numeric:tabular-nums}
+.big{font-size:28px;font-weight:700;color:var(--ac)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:100px;padding:9px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;cursor:pointer}
+.seg button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 6px;background:var(--bd)}
+.leg{font-size:12px;color:var(--mu);display:flex;gap:14px}
+.up{color:var(--r)}.dn{color:var(--g)}
+.note{font-size:12px;color:var(--mu);margin-top:8px}
+.sc{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}th:first-child,td:first-child{text-align:left}
+.err{color:var(--r);font-weight:600}
+</style></head><body><div class="w">
+<h1>🏠 Home Loan Calculator</h1>
+<p class="sub">EMI, total cost, and what happens when your interest rate changes mid-loan.</p>
+
+<div class="grid">
+<div class="c"><h2>Current loan</h2>
+<label>Loan amount (₹)</label><input id="P" type="number" value="5000000" min="0" step="10000">
+<label>Interest rate (% per year): <b id="Rv"></b></label><input id="R" type="range" min="1" max="20" step="0.05" value="8.5">
+<label>Tenure (years): <b id="Tv"></b></label><input id="T" type="range" min="1" max="30" step="1" value="25">
+<label>First EMI date</label><input id="FD" type="date" value="2025-07-05">
+<label>Rate basis</label>
+<select id="B"><option value="nom">Nominal, monthly compounding (bank standard)</option><option value="eff">Effective annual rate (as in your Excel)</option></select>
+<div style="margin-top:14px"><div class="note">Monthly EMI</div><div class="big" id="emi"></div></div>
+<div class="row"><span>Total interest</span><b id="ti"></b></div>
+<div class="row"><span>Total amount payable</span><b id="tp"></b></div>
+<div class="row"><span>Loan end date (last EMI)</span><b id="ed"></b></div>
+<div class="bar"><span id="b1" style="background:var(--p)"></span><span id="b2" style="background:var(--i)"></span></div>
+<div class="leg"><span>🟦 Principal</span><span>🟧 Interest</span></div>
+</div>
+
+<div class="c"><h2>After a rate change</h2>
+<label>Rate change (percentage points, e.g. -0.5 or +0.25)</label><input id="D" type="number" value="0" step="0.05">
+<label>Bank rate change date</label><input id="AS" type="date">
+<label>EMIs paid before rate change (auto)</label><input id="K" type="number" value="0" readonly>
+<label>Choose option</label>
+<div class="seg" id="seg">
+<button data-m="emi" class="on">Fixed EMI</button><button data-m="ten">Fixed tenure</button></div>
+<div class="note" id="mh"></div>
+<div id="res" style="margin-top:10px"></div>
+</div>
+</div>
+
+<div class="c" style="margin-top:14px"><h2>Year-wise schedule (new plan)</h2><div class="sc"><table id="tb"></table></div></div>
+<p class="note">Indicative figures; actual bank statements may differ slightly due to rounding and disbursement dates.</p>
+</div>
+<script>
+var $=function(i){return document.getElementById(i)},mode='emi';
+var inr=function(x){return '₹'+Math.round(x).toLocaleString('en-IN')};
+function mr(rate,b){return b==='eff'?Math.pow(1+rate,1/12)-1:rate/12}
+function pmt(r,n,P){return r===0?P/n:P*r/(1-Math.pow(1+r,-n))}
+function addM(d,m){var x=new Date(d.getFullYear(),d.getMonth()+m,1);x.setDate(Math.min(d.getDate(),new Date(x.getFullYear(),x.getMonth()+1,0).getDate()));return x}
+function fmtD(d){return d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}
+function getFD(){var v=$('FD').value;if(!v)return null;var p=v.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function paidCount(){var f=getFD(),v=$('AS').value;if(!f||!v)return 0;var p=v.split('-'),a=new Date(+p[0],+p[1]-1,+p[2]);var c=(a.getFullYear()-f.getFullYear())*12+a.getMonth()-f.getMonth()+1;while(c>0&&addM(f,c-1)>=a)c--;return Math.max(0,c)}
+var HINT={emi:'EMI stays the same; the loan gets shorter if rates fall (longer if they rise).',ten:'Tenure stays the same; EMI changes to fit the new rate.'};
+function calc(){
+var P=+$('P').value||0,R=+$('R').value/100,T=+$('T').value,B=$('B').value,D=(+$('D').value||0)/100,K=paidCount();
+$('Rv').textContent=(R*100).toFixed(2)+'%';$('Tv').textContent=T;
+var N=T*12,r=mr(R,B),E=pmt(r,N,P),tot=E*N;K=Math.min(K,N-1);$('K').value=K;
+var fd=getFD();$('ed').textContent=fd?fmtD(addM(fd,N-1)):'Pick first EMI date';$('emi').textContent=inr(E);$('ti').textContent=inr(tot-P);$('tp').textContent=inr(tot);
+$('b1').style.width=(P/tot*100)+'%';$('b2').style.width=((tot-P)/tot*100)+'%';
+var bal=P*Math.pow(1+r,K)-E*(Math.pow(1+r,K)-1)/(r||1e-12);if(r===0)bal=P-E*K;
+var nr=Math.max(0.0001,R+D),r2=mr(nr,B),left=N-K,newE,n2,ok=true;
+$('mh').textContent=HINT[mode];
+if(mode==='ten'){newE=pmt(r2,left,bal);n2=left}
+else{newE=E;
+ if(newE<=bal*r2){ok=false}else n2=Math.ceil(-Math.log(1-bal*r2/newE)/Math.log(1+r2)-1e-9)}
+var h='<div class="row"><span>First EMI at new rate</span><b>'+(fd?fmtD(addM(fd,K)):'—')+'</b></div><div class="row"><span>Outstanding after '+K+' EMIs</span><b>'+inr(bal)+'</b></div><div class="row"><span>New interest rate</span><b>'+(nr*100).toFixed(2)+'%</b></div>';
+var rows=[];
+if(!ok){h+='<p class="err">That EMI is too low to ever repay the loan at this rate. Increase it above '+inr(bal*r2)+'.</p>'}
+else{
+ var s=bal,paid=[],pm=0,tint=0;
+ for(var m=1;m<=n2;m++){var it=s*r2,pr=Math.min(newE-it,s),pay=pr+it;if(m===n2&&mode!=='ten')pay=s+it,pr=s;s-=pr;tint+=it;paid.push([m,pr,it,Math.max(s,0)])}
+ var rem=0;paid.forEach(function(x){rem+=x[1]+x[2]});
+ var newTot=E*K+rem,d=newTot-tot,dm=n2-left,lastE=paid.length?paid[paid.length-1][1]+paid[paid.length-1][2]:0;
+ h+='<div class="row"><span>New EMI</span><b>'+inr(newE)+(Math.abs(newE-E)>0.5?' <span class="'+(newE>E?'up':'dn')+'">('+(newE>E?'+':'−')+inr(Math.abs(newE-E))+')</span>':'')+'</b></div>'
+ +'<div class="row"><span>Months left</span><b>'+n2+' ('+(n2/12).toFixed(1)+' yrs) <span class="'+(dm>0?'up':dm<0?'dn':'')+'">'+(dm?(dm>0?'+':'−')+Math.abs(dm)+' mo':'')+'</span></b></div>'
+ +(mode==='emi'&&lastE<newE-1?'<div class="row"><span>Final EMI</span><b>'+inr(lastE)+'</b></div>':'')
+ +'<div class="row"><span>New loan end date</span><b>'+(fd?fmtD(addM(fd,K+n2-1)):'—')+'</b></div>'
+ +'<div class="row"><span>Remaining interest</span><b>'+inr(tint)+'</b></div>'
+ +'<div class="row"><span>Total amount to be paid</span><b>'+inr(newTot)+'</b></div>'
+ +'<div class="row"><span>Change vs original total</span><b class="'+(d>1?'up':d<-1?'dn':'')+'">'+(d>=0?'+':'−')+inr(Math.abs(d))+'</b></div>';
+ var yr={};paid.forEach(function(x){var y=Math.ceil(x[0]/12);yr[y]=yr[y]||[0,0,0];yr[y][0]+=x[1];yr[y][1]+=x[2];yr[y][2]=x[3]});
+ var t='<tr><th>Year (after EMI '+K+')</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>';
+ Object.keys(yr).forEach(function(y){t+='<tr><td>'+y+'</td><td>'+inr(yr[y][0])+'</td><td>'+inr(yr[y][1])+'</td><td>'+inr(yr[y][2])+'</td></tr>'});
+ $('tb').innerHTML=t}
+if(!ok)$('tb').innerHTML='';
+$('res').innerHTML=h}
+document.querySelectorAll('input,select').forEach(function(e){e.addEventListener('input',calc)});
+$('seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;mode=b.dataset.m;document.querySelectorAll('#seg button').forEach(function(x){x.classList.toggle('on',x===b)});calc()});
+var t0=new Date();$('AS').value=t0.getFullYear()+'-'+String(t0.getMonth()+1).padStart(2,'0')+'-'+String(t0.getDate()).padStart(2,'0');
+calc();
+</script></body></html>
